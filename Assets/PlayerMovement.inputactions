@@ -18,12 +18,12 @@
                 },
                 {
                     "name": "Action",
-                    "type": "Button",
+                    "type": "Value",
                     "id": "58d81de1-f88b-4afa-9d7e-5ab24fdbd73e",
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
-                    "initialStateCheck": false,
+                    "initialStateCheck": true,
                     "priority": 0
                 }
             ],
