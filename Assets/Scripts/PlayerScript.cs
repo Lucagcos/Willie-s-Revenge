@@ -1,6 +1,8 @@
 using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.U2D;
 
 public class PlayerScript : MonoBehaviour
 {
@@ -17,12 +19,15 @@ public class PlayerScript : MonoBehaviour
 
     public ShieldScript shield;
 
+    SpriteRenderer sprite; 
+
 
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         _rbody = GetComponent<Rigidbody2D>();
+        sprite = GetComponent<SpriteRenderer>();
     }
 
     // Update is called once per frame
@@ -31,6 +36,7 @@ public class PlayerScript : MonoBehaviour
         if (moveMode)
         {
             _rbody.linearVelocity = moveDirection * speed;
+            shield.gameObject.SetActive(false);
         }
         else
         {
@@ -64,6 +70,21 @@ public class PlayerScript : MonoBehaviour
     {
         held = value.isPressed;
         //Debug.Log("OnAction: " + held);
+    }
+
+    public IEnumerator FlashPlayer()
+    {
+
+        for (int i = 0; i < 4; i++)
+        {
+            sprite.color = new Color(1, 1, 1, 0);
+
+            yield return new WaitForSeconds(0.1f);
+
+            sprite.color = new Color(1, 1, 1, 1);
+
+            yield return new WaitForSeconds(0.1f);
+        }
     }
 
 }

@@ -1,17 +1,18 @@
 using UnityEngine;
+using System.Collections;
+
 
 public class ProjectileLogic : MonoBehaviour
 {
-    GameObject player;
-    Vector2 playerPosition;
-
+    private GameObject player;
+    private Vector2 playerPosition;
+    private PlayerScript playerScript;
+    private Rigidbody2D _rbody;
     private GameManagerScript manager;
-
     public float speed;
     public float rainSpeed;
-
-    private Rigidbody2D _rbody;
-
+   
+ 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -21,7 +22,9 @@ public class ProjectileLogic : MonoBehaviour
         }
 
         player = GameObject.FindGameObjectWithTag("Player");
+        playerScript = player.GetComponent<PlayerScript>(); 
         _rbody = GetComponent<Rigidbody2D>();
+
         LaunchHandler(); 
     }
 
@@ -64,15 +67,11 @@ public class ProjectileLogic : MonoBehaviour
         transform.rotation = Quaternion.Euler(0, 0, angle - 90f);
     }
 
-    void ShieldLaunch4D()
-    {
-
-    }
-
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.CompareTag("Player"))
         {
+            playerScript.StartCoroutine(playerScript.FlashPlayer());
             Destroy(gameObject);
         }
 
@@ -87,4 +86,6 @@ public class ProjectileLogic : MonoBehaviour
     {
         Destroy(gameObject);
     }
+
+   
 }

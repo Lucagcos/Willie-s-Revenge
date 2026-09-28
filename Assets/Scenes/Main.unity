@@ -518,12 +518,12 @@ MonoBehaviour:
   Projectile1: {fileID: 8057137251079494252, guid: 37de40605ca98b54fa8df627b19b63db, type: 3}
   Projectile2: {fileID: 2864693782230690570, guid: 93118916f3e21ee4c97d75ec4f2fb3be, type: 3}
   player: {fileID: 406267340}
-  gameTurn: 5
+  willie: {fileID: 170160075}
+  gameTurn: 0
   squareSize: {x: 12, y: 8}
   squareCenter: {x: 0, y: -1.5}
   fightUI: {fileID: 1297427178}
   rain: 0
-  willie: {fileID: 170160075}
 --- !u!4 &342384485
 Transform:
   m_ObjectHideFlags: 0
@@ -1184,7 +1184,7 @@ Transform:
   m_GameObject: {fileID: 822771014}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.47999996, y: 0, z: 0}
+  m_LocalPosition: {x: 0.6, y: 0, z: 0}
   m_LocalScale: {x: 0.06, y: 0.71999997, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
