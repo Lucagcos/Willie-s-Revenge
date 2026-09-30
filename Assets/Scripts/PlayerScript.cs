@@ -1,6 +1,9 @@
 using System;
+using System.Collections;
+using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.U2D;
 
 public class PlayerScript : MonoBehaviour
 {
@@ -17,12 +20,27 @@ public class PlayerScript : MonoBehaviour
 
     public ShieldScript shield;
 
+    SpriteRenderer sprite;
+
+    public int health;
+
+    public int healthMax;
+
+    public TMP_Text healthUI;
+
+    public bool flash;
+
+    public GameManagerScript manager;
+
 
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
+        healthMax = health;
         _rbody = GetComponent<Rigidbody2D>();
+        sprite = GetComponent<SpriteRenderer>();
+        UpdateHealthText();
     }
 
     // Update is called once per frame
@@ -31,6 +49,7 @@ public class PlayerScript : MonoBehaviour
         if (moveMode)
         {
             _rbody.linearVelocity = moveDirection * speed;
+            shield.gameObject.SetActive(false);
         }
         else
         {
@@ -49,6 +68,7 @@ public class PlayerScript : MonoBehaviour
                 shield.gameObject.SetActive(true);
             }
         }
+
     }
 
     public void OnMove(InputValue value)
@@ -64,6 +84,41 @@ public class PlayerScript : MonoBehaviour
     {
         held = value.isPressed;
         //Debug.Log("OnAction: " + held);
+    }
+
+    public IEnumerator FlashPlayer()
+    {
+        UpdateHealthText();
+
+        flash = true;
+
+        for (int i = 0; i < 4; i++)
+        {
+            sprite.color = new Color(1, 1, 1, 0);
+
+            yield return new WaitForSeconds(0.1f);
+
+            sprite.color = new Color(1, 1, 1, 1);
+
+            yield return new WaitForSeconds(0.1f);
+        }
+
+        flash = false;
+
+    }
+
+    public void UpdateHealthText()
+    { 
+        healthUI.text = "Health: " + health.ToString() + "/" + healthMax.ToString();
+    }
+
+    public void AddHealth()
+    {
+        if (health + 1 <= healthMax)
+        {
+            health++;
+        }
+        UpdateHealthText();
     }
 
 }
