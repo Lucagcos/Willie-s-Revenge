@@ -16,22 +16,32 @@ public class GameManagerScript : MonoBehaviour
     public Vector2 squareSize;
     public Vector2 squareCenter;
 
-    public TMP_Text fightUI; 
+    public TMP_Text fightUI;
+
+    public TMP_Text roundUI;
 
     public bool rain; 
     bool gameGoing = true;
+
+    bool gameOver = false;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         willieSprite = willie.GetComponent<SpriteRenderer>();
+        UpdateRound();
         StartCoroutine(GameLoop());
     }
 
     // Update is called once per frame
     void Update()
     {
-        
+        if (player.health <= 0 && !gameOver)
+        {
+            gameOver = true;
+            StopAllCoroutines();
+            StartCoroutine(GameLoseSequence());
+        }
     }
 
     //keeps track of the game turn to decide what attack to do 
@@ -89,7 +99,9 @@ public class GameManagerScript : MonoBehaviour
                     gameGoing = false;
                     break;
             }
-
+            
+            yield return new WaitForSeconds(2f);
+            player.AddHealth();
             yield return StartCoroutine(PlayerTurn());
         }
         
@@ -263,10 +275,10 @@ public class GameManagerScript : MonoBehaviour
     {
         for (int i = 0; i < 15; i++)
         {
-            yield return new WaitForSeconds(0.5f);
+            yield return new WaitForSeconds(0.6f);
             rain = false;
             SpawnOnPerimeter(Projectile1);
-            yield return new WaitForSeconds(0.2f);
+            yield return new WaitForSeconds(0.3f);
             rain = true;
             SpawnOnPerimeter(Projectile1);
         }
@@ -277,11 +289,11 @@ public class GameManagerScript : MonoBehaviour
     {
         for (int i = 0; i < 10; i++)
         {
-            yield return new WaitForSeconds(0.7f);
+            yield return new WaitForSeconds(0.75f);
             rain = false;
             SpawnOnPerimeter(Projectile1); 
             SpawnOnPerimeter(Projectile1);
-            yield return new WaitForSeconds(0.7f);
+            yield return new WaitForSeconds(0.75f);
             rain = true;
             SpawnOnPerimeter(Projectile1);
             SpawnOnPerimeter(Projectile1);
@@ -317,7 +329,6 @@ public class GameManagerScript : MonoBehaviour
         foreach (int direction in directions)
         {
             float wait = Random.Range(.3f, .5f);
-
             yield return new WaitForSeconds(wait);
             SpawnForShield(Projectile2, direction);
         }
@@ -349,7 +360,6 @@ public class GameManagerScript : MonoBehaviour
         foreach (int direction in directions)
         {
             float wait = Random.Range(.4f, .7f);
-
             yield return new WaitForSeconds(wait);
             SpawnForShield(Projectile2, direction);
         }
@@ -366,7 +376,7 @@ public class GameManagerScript : MonoBehaviour
         foreach (int direction in directions)
         {
             float wait = Random.Range(.3f, .6f);
-
+            
             yield return new WaitForSeconds(wait);
             SpawnForShield(Projectile2, direction);
         }
@@ -384,7 +394,6 @@ public class GameManagerScript : MonoBehaviour
 
     IEnumerator PlayerTurn()
     {
-        yield return new WaitForSeconds(2f);
 
         while (!player.held)
         { 
@@ -393,10 +402,72 @@ public class GameManagerScript : MonoBehaviour
             yield return null;
         }
 
+        UpdateRound();
         fightUI.color = new Color(1f, 1f, 1f, 0f);
         willieSprite.color = new Color(1f, 1f, 1f, .1f);
         gameTurn++;
 
+    }
+
+    void UpdateRound()
+    {
+        if (gameTurn >= 10)
+        {
+            roundUI.text = "10/10";
+        }
+        else
+        {
+            if (gameTurn != 0)
+            {
+                roundUI.text = (gameTurn + 1).ToString() + "/???";
+            }
+            else
+            {
+                roundUI.text = "1/???";
+            }
+        }
+            
+    }
+
+    IEnumerator GameLoseSequence()
+    {
+        
+        ClearProjectiles();
+
+        gameGoing = false;
+
+        gameTurn = 0;
+        rain = false;
+
+        player.health = player.healthMax;
+        player.UpdateHealthText();
+
+        player.moveMode = true;
+        player.held = false;
+
+        willieSprite.color = new Color(1f, 1f, 1f, 1f);
+        fightUI.color = Color.white;
+
+        UpdateRound();
+
+        // Optional: show game-over screen here
+        yield return new WaitForSeconds(2f);
+
+        gameOver = false;
+        gameGoing = true;
+
+        StartCoroutine(GameLoop());
+    }
+
+
+    void ClearProjectiles()
+    {
+        GameObject[] projectiles = GameObject.FindGameObjectsWithTag("Projectile");
+
+        foreach (GameObject projectile in projectiles)
+        {
+            Destroy(projectile);
+        }
     }
 
 }

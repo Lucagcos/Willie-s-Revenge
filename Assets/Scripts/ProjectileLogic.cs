@@ -71,6 +71,10 @@ public class ProjectileLogic : MonoBehaviour
     {
         if (collision.CompareTag("Player"))
         {
+            if (!playerScript.flash)
+            {
+                playerScript.health--;
+            }
             playerScript.StartCoroutine(playerScript.FlashPlayer());
             Destroy(gameObject);
         }
