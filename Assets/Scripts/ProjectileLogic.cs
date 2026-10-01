@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using UnityEngine.Rendering.UI;
 
 
 public class ProjectileLogic : MonoBehaviour
@@ -42,6 +43,7 @@ public class ProjectileLogic : MonoBehaviour
             LaunchAtPlayer(); 
     }
 
+    //get the player posotion and have projectile move at that point with constant speed 
     void LaunchAtPlayer()
     {
 
@@ -57,6 +59,7 @@ public class ProjectileLogic : MonoBehaviour
 
     }
 
+    //have projectile move straight down with constant speed 
     void LaunchDown()
     {
         Vector2 direction = Vector2.down;
@@ -74,13 +77,14 @@ public class ProjectileLogic : MonoBehaviour
             if (!playerScript.flash)
             {
                 playerScript.health--;
+                playerScript.StartCoroutine(playerScript.FlashPlayer());
             }
-            playerScript.StartCoroutine(playerScript.FlashPlayer());
             Destroy(gameObject);
         }
 
         if (collision.CompareTag("Shield"))
         {
+            manager.PlayBlockSound(); 
             Destroy(gameObject);
         }
 
@@ -90,6 +94,4 @@ public class ProjectileLogic : MonoBehaviour
     {
         Destroy(gameObject);
     }
-
-   
 }
