@@ -1,7 +1,10 @@
-using UnityEngine;
 using System.Collections;
-using TMPro;
 using System.Collections.Generic;
+using TMPro;
+using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
+
 public class GameManagerScript : MonoBehaviour
 {
 
@@ -12,7 +15,8 @@ public class GameManagerScript : MonoBehaviour
     public GameObject willie;
     private SpriteRenderer willieSprite;
 
-    public int gameTurn;
+    public SpriteRenderer DialogueSprite;
+
     public Vector2 squareSize;
     public Vector2 squareCenter;
 
@@ -20,14 +24,24 @@ public class GameManagerScript : MonoBehaviour
 
     public TMP_Text roundUI;
 
+    public TMP_Text win;
+
+    public TMP_Text dialogue;
+    AudioSource _audioSource;
+    public AudioClip shieldBlock;
+
+    public int gameTurn;
     public bool rain; 
     bool gameGoing = true;
-
     bool gameOver = false;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
+        _audioSource = GetComponent<AudioSource>();
+        win.color = new Color(1f, 1f, 1f, 0f);
+        DialogueSprite.color = new Color(1f, 1f, 1f, 0f);
+        dialogue.color = new Color(0f, 0f, 0f, 1f);
         willieSprite = willie.GetComponent<SpriteRenderer>();
         UpdateRound();
         StartCoroutine(GameLoop());
@@ -41,6 +55,11 @@ public class GameManagerScript : MonoBehaviour
             gameOver = true;
             StopAllCoroutines();
             StartCoroutine(GameLoseSequence());
+        }
+
+        if (Keyboard.current.escapeKey.wasPressedThisFrame)
+        {
+            GameExit();
         }
     }
 
@@ -93,26 +112,33 @@ public class GameManagerScript : MonoBehaviour
 
                 case 10:
                     yield return StartCoroutine(AttackTen());
+                    gameGoing = false; 
                     break;
 
                 default:
-                    gameGoing = false;
                     break;
             }
             
+            //player turn 
             yield return new WaitForSeconds(2f);
             player.AddHealth();
             yield return StartCoroutine(PlayerTurn());
         }
-        
+
+        //victoroy effects and return to main menu
+        StartCoroutine(RotateWillie());
+        yield return new WaitForSeconds(5);
+        GameExit(); 
     }
-  
+
+    //set the spawn point for projectiles to an imaginary square perimeter around the playable area 
     GameObject SpawnOnPerimeter(GameObject projectile)
     {
         Vector2 spawnPosition = GetRandomPerimeterPosition();
         return Instantiate(projectile, spawnPosition, Quaternion.identity);
     }
 
+    //spawn projectiles in a total of 8 possible spots
     GameObject SpawnForShield(GameObject projectile, int direction)
     {
         Vector2 spawnPosition = GetOctalPosition(direction);
@@ -130,7 +156,6 @@ public class GameManagerScript : MonoBehaviour
         float bottom = squareCenter.y - halfHeight;
         float top = squareCenter.y + halfHeight;
 
-        // Pick a random side: 0 = Top, 1 = Bottom, 2 = Left, 3 = Right
         int side = Random.Range(0, 4);
         Vector2 randomPoint = Vector2.zero;
 
@@ -143,6 +168,7 @@ public class GameManagerScript : MonoBehaviour
             case 0: // Top edge
                 if (rain)
                 {
+                    //ensure rain projectiles are inside the playable area 
                     randomPoint = new Vector2(Random.Range(-2.5f, 2f), top);
                 }
                 else 
@@ -204,12 +230,12 @@ public class GameManagerScript : MonoBehaviour
         return spawnPoint;
     }
 
+    //helper method for shield projectiles. This is for making a list so we can have pseudo random spawning 
     List<int> CreateDirectionList(int startDirection, int endDirection, int repeats)
     {
         List<int> directions = new List<int>();
 
-        // Add every direction once per repeat,
-        // plus one random direction
+        // Add every direction once per repeat, plus one random direction
         for (int i = 0; i < repeats; i++)
         {
             for (int direction = startDirection; direction <= endDirection; direction++)
@@ -323,7 +349,6 @@ public class GameManagerScript : MonoBehaviour
     {
         rain = false;
 
-        // Directions 0-3, each guaranteed three times
         List<int> directions = CreateDirectionList(0, 3, 4);
 
         foreach (int direction in directions)
@@ -354,7 +379,6 @@ public class GameManagerScript : MonoBehaviour
     {
         rain = false;
 
-        // Directions 0-7, each guaranteed twice
         List<int> directions = CreateDirectionList(0, 7, 3);
 
         foreach (int direction in directions)
@@ -370,7 +394,6 @@ public class GameManagerScript : MonoBehaviour
     {
         rain = false;
 
-        // Directions 0-7, each guaranteed three times
         List<int> directions = CreateDirectionList(0, 7, 3);
 
         foreach (int direction in directions)
@@ -385,6 +408,10 @@ public class GameManagerScript : MonoBehaviour
 
         // Return to normal movement mode
         player.moveMode = true;
+        DialogueSprite.color = new Color(1f, 1f, 1f, 1f);
+        dialogue.text = "RAHHHHHH!";
+
+        yield return new WaitForSeconds(2); 
 
         // Finish with previous attacks
         yield return StartCoroutine(AttackTwo());
@@ -394,9 +421,12 @@ public class GameManagerScript : MonoBehaviour
 
     IEnumerator PlayerTurn()
     {
-
+        //turn on and off certain ui elements 
+        DialogueSprite.color = new Color(1f, 1f, 1f, 1f);
+        dialogue.text = RandomDialogue();
         while (!player.held)
-        { 
+        {
+            
             willieSprite.color = new Color(1f, 1f, 1f, 1f);   
             fightUI.color = Color.white;
             yield return null;
@@ -405,6 +435,7 @@ public class GameManagerScript : MonoBehaviour
         UpdateRound();
         fightUI.color = new Color(1f, 1f, 1f, 0f);
         willieSprite.color = new Color(1f, 1f, 1f, .1f);
+        DialogueSprite.color = new Color(1f, 1f, 1f, 0f);
         gameTurn++;
 
     }
@@ -413,17 +444,17 @@ public class GameManagerScript : MonoBehaviour
     {
         if (gameTurn >= 10)
         {
-            roundUI.text = "10/10";
+            roundUI.text = "Round: 10/10";
         }
         else
         {
             if (gameTurn != 0)
             {
-                roundUI.text = (gameTurn + 1).ToString() + "/???";
+                roundUI.text ="Round: " + (gameTurn + 1).ToString() + "/??";
             }
             else
             {
-                roundUI.text = "1/???";
+                roundUI.text = "Round: 1/??";
             }
         }
             
@@ -431,7 +462,7 @@ public class GameManagerScript : MonoBehaviour
 
     IEnumerator GameLoseSequence()
     {
-        
+        //clear the screen and reset variables
         ClearProjectiles();
 
         gameGoing = false;
@@ -446,19 +477,25 @@ public class GameManagerScript : MonoBehaviour
         player.held = false;
 
         willieSprite.color = new Color(1f, 1f, 1f, 1f);
-        fightUI.color = Color.white;
+        //fightUI.color = Color.white;
 
         UpdateRound();
-
-        // Optional: show game-over screen here
-        yield return new WaitForSeconds(2f);
 
         gameOver = false;
         gameGoing = true;
 
-        StartCoroutine(GameLoop());
-    }
+        
+        roundUI.color = new Color(1, 1, 1, 0);
+        DialogueSprite.color = new Color(1f, 1f, 1f, 1f);
+        dialogue.color = new Color(0, 0, 0, 1);
+        dialogue.text = "HAHA TOO BAD!";
+        yield return new WaitForSeconds(3f);
+        DialogueSprite.color = new Color(1f, 1f, 1f, 0f);
 
+        //send back to main menu
+        GameExit(); 
+        //StartCoroutine(GameLoop());
+    }
 
     void ClearProjectiles()
     {
@@ -470,4 +507,81 @@ public class GameManagerScript : MonoBehaviour
         }
     }
 
+    //smoothly rotate willie sprite
+    IEnumerator RotateWillie()
+    {
+        win.color = new Color(1f, 1f, 1f, 1f);
+        willieSprite.color = new Color(1, 1, 1, 1); 
+        Quaternion startRotation = willie.transform.rotation;
+        Quaternion endRotation = Quaternion.Euler(0, 0, 90);
+
+        float duration = 0.6f;
+        float elapsedTime = 0f;
+
+        while (elapsedTime < duration)
+        {
+            elapsedTime += Time.deltaTime;
+
+            willie.transform.rotation = Quaternion.Lerp(startRotation , endRotation , elapsedTime / duration );
+
+            yield return null;
+        }
+
+        willie.transform.rotation = endRotation;
+    }
+
+    public void GameExit()
+    {
+        SceneManager.LoadScene("GameStart");
+    }
+
+    public string RandomDialogue()
+    {
+
+        int option = Random.Range(0, 8);
+
+        if (gameTurn == 0)
+        {
+            return "Let's go!\nArrow Keys to Move and Space \nto Continue";
+        }
+        if (gameTurn == 5)
+        {
+            return "Alright bet...\nArrow Keys to\nBlock a Direction.";
+        }
+        if (gameTurn == 7)
+        {
+            return "Hey real quick,\ndon't do two\nkeys at once.";
+        }
+        if (!gameGoing)
+        {
+            return "NOOO AHHH \n>:(";
+        }
+
+        switch (option)
+        {
+            case (0):
+                return "GRRRR!";
+            case (1):
+                return "I'll show ya!";
+            case (2):
+                return "Now it's on. \nYou're going down.";
+            case (3):
+                return "Impressive...\nLet's see \nwhat you got!";
+            case (4):
+                return "Ok lil bro.";
+            case (5):
+                return "You're done for!";
+            case (6):
+                return "You can't \nhandle this!";
+            case (7):
+                return "Ja-rona!";
+            default:
+                return "Def";
+        }
+    }
+
+    public void PlayBlockSound()
+    {
+        _audioSource.PlayOneShot(shieldBlock,20f);
+    }
 }
